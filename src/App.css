@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+  background: #1B1B1B;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+}
+
+/* NAVBAR STYLING */
+.navbar {
+  width: 100%;
+  background: #1B1B1B;
+  height: 64px;
+  box-sizing: border-box;
+  font-family: 'Poppins', Arial, sans-serif;
+  border-bottom: 1.5px solid #232323;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 100;
+  letter-spacing: 0.5px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.azki-pink {
+  color: #FA3689;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.nav-links li {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 0;
+  transition: color 0.2s;
+  position: relative;
+  white-space: nowrap;
+}
+
+.nav-links a:hover {
+  color: #FA3689;
+}
+
+.nav-links a.active {
+  color: #FA3689;
+}
+
+.nav-links a.active::after {
+  content: '';
+  display: block;
+  width: 60%;
+  height: 2.5px;
+  background: #FA3689;
+  border-radius: 2px;
+  position: absolute;
+  left: 20%;
+  bottom: 0;
+}
+
+/* MAIN CONTENT STYLING */
+#root {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 1024px) {
+  .nav-container {
+    padding: 0 1.5rem;
+  }
+  
+  .nav-links {
+    gap: 2rem;
+  }
+  
+  .logo {
+    font-size: 1.35rem;
+  }
+  
+  .nav-links a {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 1rem;
+  }
+  
+  .nav-links {
+    gap: 1.5rem;
+  }
+  
+  .logo {
+    font-size: 1.25rem;
+  }
+  
+  .nav-links a {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav-container {
+    padding: 0 0.8rem;
+  }
+  
+  .nav-links {
+    gap: 1rem;
+  }
+  
+  .logo {
+    font-size: 1.1rem;
+  }
+  
+  .nav-links a {
+    font-size: 0.85rem;
+  }
+}
+
+/* Hapus styling default yang tidak diperlukan */
+.logo:hover {
+  filter: none;
+}
+
+.logo.react:hover {
+  filter: none;
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
