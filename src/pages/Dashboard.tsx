@@ -12,9 +12,11 @@ type Song = {
     played?: string;
 };
 
+
 const Dashboard: React.FC = () => {
     const [songs, setSongs] = useState<Song[]>([]);
     const [featured, setFeatured] = useState<Song | null>(null);
+    const [showAll, setShowAll] = useState(false);
 
     useEffect(() => {
         // For demo purposes, we'll use mock data
@@ -80,12 +82,16 @@ const Dashboard: React.FC = () => {
         setFeatured(mockSongs[0]);
     }, []);
 
+    // Only show 3 songs at first, show all if showAll is true
+    const initialVisible = 3;
+    const visibleSongs = showAll ? songs : songs.slice(0, initialVisible);
+
     return (
         <div style={{
             background: '#1B1B1B',
             minHeight: '100vh',
             color: 'white',
-            padding: '0',
+            padding: '0 0 120px 0', // padding bottom agar tidak tertutup player bar
             margin: '0',
             fontFamily: '"Poppins", sans-serif',
             overflowX: 'hidden'
@@ -215,9 +221,9 @@ const Dashboard: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {songs.map((song, index) => (
+                                {visibleSongs.map((song, index) => (
                                     <tr key={song.id} style={{
-                                        borderBottom: index < songs.length - 1 ? '1px solid #333' : 'none',
+                                        borderBottom: index < visibleSongs.length - 1 ? '1px solid #333' : 'none',
                                         transition: 'background 0.2s ease'
                                     }}
                                         onMouseOver={(e) => {
@@ -249,6 +255,34 @@ const Dashboard: React.FC = () => {
                         </table>
                     </div>
                 </div>
+                {/* Show More Button */}
+                {!showAll && songs.length > initialVisible && (
+                    <div style={{ textAlign: 'center', marginTop: '30px', marginBottom: '0' }}>
+                        <button
+                            style={{
+                                background: '#FA3689',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '12px 40px',
+                                fontWeight: 500,
+                                fontSize: '16px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                boxShadow: '0 2px 8px rgba(250, 54, 137, 0.15)'
+                            }}
+                            onClick={() => setShowAll(true)}
+                            onMouseOver={e => {
+                                e.currentTarget.style.background = '#e02578';
+                            }}
+                            onMouseOut={e => {
+                                e.currentTarget.style.background = '#FA3689';
+                            }}
+                        >
+                            Show More
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Add Poppins font from Google Fonts */}
