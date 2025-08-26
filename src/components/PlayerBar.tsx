@@ -1,3 +1,4 @@
+// PlayerBar.tsx
 import React from 'react';
 
 const PlayerBar: React.FC = () => {
@@ -25,14 +26,14 @@ const PlayerBar: React.FC = () => {
         {/* CENTER CONTROLS */}
         <div className="player-bar__center">
           <button className="player-bar__icon-btn" aria-label="Previous">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M7 12L17 6V18L7 12Z" fill="#fff" />
               <rect x="5" y="6" width="2" height="12" rx="1" fill="#fff" />
             </svg>
           </button>
 
           <button className="player-bar__icon-btn player-bar__icon-btn--main" aria-label="Pause">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="12" fill="#FA3689" />
               <rect x="9" y="8" width="2.5" height="8" rx="1" fill="#fff" />
               <rect x="12.5" y="8" width="2.5" height="8" rx="1" fill="#fff" />
@@ -40,20 +41,28 @@ const PlayerBar: React.FC = () => {
           </button>
 
           <button className="player-bar__icon-btn" aria-label="Next">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path d="M17 12L7 18V6L17 12Z" fill="#fff" />
               <rect x="17" y="6" width="2" height="12" rx="1" fill="#fff" />
             </svg>
           </button>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT SIDE - Timer */}
         <div className="player-bar__right">
           <span className="player-bar__time">{song.current}</span>
-          <div className="player-bar__progress-bar">
-            <div className="player-bar__progress" style={{ width: `${song.progress * 100}%` }} />
-          </div>
+          <span className="player-bar__time-separator">/</span>
           <span className="player-bar__time">{song.duration}</span>
+        </div>
+      </div>
+      
+      {/* Progress Bar - Now positioned at the bottom */}
+      <div className="player-bar__progress-container">
+        <div className="player-bar__progress-bar">
+          <div 
+            className="player-bar__progress" 
+            style={{ width: `${song.progress * 100}%` }} 
+          />
         </div>
       </div>
     </footer>
