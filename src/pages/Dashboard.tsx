@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useAudioPlayer } from '../contexts/AudioPlayerContext';
+import { usePlaylist } from '../contexts/PlaylistContext';
+import CreatePlaylistModal from '../components/CreatePlaylistModal';
+import DropdownPortal from '../components/DropdownPortal';
 
 type Song = {
     id: string;
@@ -12,11 +16,24 @@ type Song = {
     played?: string;
 };
 
-
 const Dashboard: React.FC = () => {
     const [songs, setSongs] = useState<Song[]>([]);
     const [featured, setFeatured] = useState<Song | null>(null);
     const [showAll, setShowAll] = useState(false);
+    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+    const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+    const { playlists, addSongToPlaylist, createPlaylist } = usePlaylist();
+
+
+    const menuButtonsRef = useRef<{ [key: string]: HTMLElement | null }>({});
+
+    const handleAddToPlaylist = (song: Song, playlistId: string) => {
+        addSongToPlaylist(playlistId, song);
+        setSelectedSong(null);
+    };
+
+    // Gunakan hook audio player
+    const { playSong, currentSong, isPlaying } = useAudioPlayer();
 
     useEffect(() => {
         // For demo purposes, we'll use mock data
@@ -24,74 +41,81 @@ const Dashboard: React.FC = () => {
             {
                 id: "1",
                 title: "INOCHI 2024 Ver",
-                file: "inochi_2024.flac",
-                cover: "inochi_2024.jpg",
-                duration: "4:30",
+                file: "Inochi(2024 ver.).flac",
+                cover: "AZKi-Inochi.jpg",
+                duration: "4:32",
                 mood: ["emotional", "uplifting"],
-                description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi.",
-                releaseDate: "10/15/08",
-                played: "16,000"
+                description: "“Inochi (2024 ver.)” adalah refleksi matang tentang hidup, eksistensi, dan hubungan antara penyanyi dengan pendengar. Jika versi 2019 dipenuhi rasa takut dilupakan, versi 2024 menampilkan kedewasaan & ketenangan hati: bahkan jika suatu hari dilupakan, nyanyiannya, kata-kata yang sudah sampai, dan momen yang pernah dibagikan tetap hidup selamanya.Lagu ini menunjukkan perjalanan AZKi dari seorang penyanyi yang rapuh dan takut hilang, menjadi seorang diva yang yakin bahwa nyanyiannya adalah warisan, bukan sekadar eksistensi yang bergantung pada ingatan orang lain.",
+                releaseDate: "July 24, 2024",
+                played: "467.040"
             },
             {
                 id: "2",
-                title: "表亲カンパネラ",
-                file: "song2.flac",
-                cover: "song2.jpg",
-                duration: "4:10",
+                title: "未来キャンペーネラ",
+                file: "Mirai-Campanella.flac",
+                cover: "AZKi-Mirai-Campanella.jpg",
+                duration: "3:48",
                 mood: ["energetic", "happy"],
-                description: "Another great song by AZKi",
-                releaseDate: "10/05/14",
-                played: "16,000"
+                description: "Mirai Campanella adalah lagu tentang pencarian jati diri, keberanian menghadapi ketakutan, dan keyakinan bahwa suara hati dapat menuntun kita menuju masa depan.Liriknya menggambarkan perjalanan batin seseorang yang meragukan dirinya, merasa tertinggal dari orang lain, dan hampir tenggelam oleh 'noise' dunia. Namun, simbol Campanella (lonceng) hadir sebagai panggilan lembut dari masa depan — tanda bahwa harapan masih ada.",
+                releaseDate: "July 2,2025",
+                played: "96.423"
             },
             {
                 id: "3",
                 title: "Creating World",
-                file: "song3.flac",
-                cover: "song3.jpg",
-                duration: "4:40",
+                file: "Creating-World.flac",
+                cover: "AZKi-Creating-World.jpg",
+                duration: "4:22",
                 mood: ["chill", "relaxing"],
-                description: "A relaxing track for your day",
-                releaseDate: "10/04/02",
-                played: "16,000"
+                description: "Creating World adalah lagu tentang membangun masa depan bersama melalui musik. Liriknya menggambarkan perjalanan dari keraguan dan kegelapan menuju cahaya dan harapan. AZKi menyampaikan bahwa meskipun kita takut dan terluka oleh kata-kata, keberanian selalu ada dalam diri kita, dan kita tidak perlu menjadi orang lain untuk bisa melangkah.Lagu ini juga menekankan kekuatan suara dan musik: bagaimana suara bisa menghubungkan hati, menciptakan kisah bersama, dan menjadi alasan untuk terus hidup dan bermimpi. 'Creating World' adalah deklarasi bahwa dunia baru penuh kemungkinan dapat tercipta dari nyanyian dan hubungan antara penyanyi dan pendengar.",
+                releaseDate: "December 28, 2018",
+                played: "761.000"
             },
             {
                 id: "4",
                 title: "Without U",
-                file: "song4.flac",
-                cover: "song4.jpg",
-                duration: "5:20",
+                file: "Without-U.flac",
+                cover: "AZKi-without-U-300x300.jpg",
+                duration: "4:41",
                 mood: ["emotional", "deep"],
-                description: "Deep emotional song",
-                releaseDate: "10/06/04",
-                played: "16,000"
+                description: "Without U adalah lagu tentang kebersamaan, rasa terima kasih, dan makna eksistensi melalui hubungan dengan orang lain. AZKi menyanyikan bahwa tanpa dukungan pendengar, ia tidak akan bisa menjadi dirinya sendiri. Namun, hubungan ini bukan hanya satu arah: ia juga ingin berada di sisi pendengarnya, mendukung mereka di saat sulit, dan meninggalkan suara yang akan tetap hidup di hati mereka. Lagu ini penuh dengan kejujuran: ketidakpastian masa depan ('sampai kapan kita bisa bersama, aku tidak tahu'), tapi justru karena itu, setiap momen bersama harus dijadikan berharga. Pada akhirnya, 'without U' adalah lagu cinta—bukan sekadar romantis, tapi cinta dalam arti luas: hubungan antara penyanyi dan mereka yang mendengarkannya.",
+                releaseDate: "November 12, 2019",
+                played: "384.000"
             },
             {
                 id: "5",
-                title: "Inoclit",
-                file: "song5.flac",
-                cover: "song5.jpg",
-                duration: "5:30",
-                mood: ["energetic", "powerful"],
-                description: "Powerful and energetic track",
-                releaseDate: "10/07/03",
-                played: "16,000"
+                title: "Inochi",
+                file: "Inochi.flac",
+                cover: "AZKi-Inochi2019.jpg",
+                duration: "4:31",
+                mood: ["emotional", "uplifting"],
+                description: "Inochi adalah lagu yang menggali arti hidup, eksistensi, dan hubungan antara penyanyi dengan pendengar. AZKi bertanya: apakah cukup sekadar bernapas untuk hidup? Apakah keberadaannya nyata kalau tidak ada yang mengingat? Lagu ini menyampaikan rasa rapuh seorang artis yang takut dilupakan, tetapi sekaligus penuh tekad: meski ada luka dan penolakan, selama jantung masih berdetak, ia akan terus bernyanyi. Ada pesan kuat bahwa setiap memori, kata, dan dukungan kecil dari orang lain bisa membuat seseorang merasa hidup. Pada akhirnya, 'Inochi' bukan hanya lagu tentang kehidupan, tapi juga tentang suara yang menyambungkan hati, membuat eksistensi menjadi berarti, dan menjadikan nyanyian sebagai bukti kehidupan itu sendiri.",
+                releaseDate: "April 30, 2019",
+                played: "1.682.342"
             }
         ];
 
         setSongs(mockSongs);
-        setFeatured(mockSongs[0]);
+
+        // Pilih lagu acak untuk Song of the Day
+        const randomIndex = Math.floor(Math.random() * mockSongs.length);
+        setFeatured(mockSongs[randomIndex]);
     }, []);
 
     // Only show 3 songs at first, show all if showAll is true
     const initialVisible = 3;
     const visibleSongs = showAll ? songs : songs.slice(0, initialVisible);
 
+    const setMenuButtonRef = (element: HTMLElement | null, songId: string) => {
+        menuButtonsRef.current[songId] = element;
+    };
+
     return (
         <div style={{
             background: '#1B1B1B',
             minHeight: '100vh',
             color: 'white',
-            padding: '0 0 120px 0', // padding bottom agar tidak tertutup player bar
+            padding: '0 0 120px 0',
             margin: '0',
             fontFamily: '"Poppins", sans-serif',
             overflowX: 'hidden'
@@ -156,18 +180,19 @@ const Dashboard: React.FC = () => {
                             }}>
                                 {featured.description}
                             </p>
-                            <button style={{
-                                background: '#FA3689',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '12px 40px',
-                                fontWeight: '600',
-                                fontSize: '16px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                boxShadow: '0 4px 12px rgba(250, 54, 137, 0.3)'
-                            }}
+                            <button
+                                style={{
+                                    background: '#FA3689',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    padding: '12px 40px',
+                                    fontWeight: '600',
+                                    fontSize: '16px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: '0 4px 12px rgba(250, 54, 137, 0.3)'
+                                }}
                                 onMouseOver={(e) => {
                                     e.currentTarget.style.background = '#e02578';
                                     e.currentTarget.style.transform = 'translateY(-2px)';
@@ -175,8 +200,10 @@ const Dashboard: React.FC = () => {
                                 onMouseOut={(e) => {
                                     e.currentTarget.style.background = '#FA3689';
                                     e.currentTarget.style.transform = 'translateY(0)';
-                                }}>
-                                PLAY
+                                }}
+                                onClick={() => playSong(featured)}
+                            >
+                                {currentSong?.id === featured.id && isPlaying ? 'PAUSE' : 'PLAY'}
                             </button>
                         </div>
                     </div>
@@ -214,26 +241,39 @@ const Dashboard: React.FC = () => {
                                     letterSpacing: '1px',
                                 }}>
                                     <th style={{ padding: '20px', width: '10%' }}>No</th>
-                                    <th style={{ padding: '20px', width: '40%' }}>Name</th>
-                                    <th style={{ padding: '20px', width: '20%' }}>Release Date</th>
+                                    <th style={{ padding: '20px', width: '35%' }}>Name</th>
+                                    <th style={{ padding: '10px', width: '20%' }}>Release Date</th>
                                     <th style={{ padding: '20px', width: '15%' }}>Played</th>
                                     <th style={{ padding: '20px', width: '15%' }}>Time</th>
+                                    <th style={{ padding: '20px', width: '5%' }}></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {visibleSongs.map((song, index) => (
-                                    <tr key={song.id} style={{
-                                        borderBottom: index < visibleSongs.length - 1 ? '1px solid #333' : 'none',
-                                        transition: 'background 0.2s ease'
-                                    }}
+                                    <tr
+                                        key={song.id}
+                                        style={{
+                                            borderBottom: index < visibleSongs.length - 1 ? '1px solid #333' : 'none',
+                                            transition: 'background 0.2s ease',
+                                            cursor: 'pointer'
+                                        }}
                                         onMouseOver={(e) => {
                                             e.currentTarget.style.background = '#333';
                                         }}
                                         onMouseOut={(e) => {
                                             e.currentTarget.style.background = 'transparent';
-                                        }}>
-                                        <td style={{ padding: '20px', fontWeight: '500' }}>{index + 1}</td>
-                                        <td style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                        }}
+                                    >
+                                        <td
+                                            style={{ padding: '20px', fontWeight: '500' }}
+                                            onClick={() => playSong(song)}
+                                        >
+                                            {index + 1}
+                                        </td>
+                                        <td
+                                            style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}
+                                            onClick={() => playSong(song)}
+                                        >
                                             <img
                                                 src={`/assets/images/${song.cover}`}
                                                 alt={song.title}
@@ -246,9 +286,57 @@ const Dashboard: React.FC = () => {
                                             />
                                             <span style={{ fontWeight: '500' }}>{song.title}</span>
                                         </td>
-                                        <td style={{ padding: '20px', color: '#ccc' }}>{song.releaseDate}</td>
-                                        <td style={{ padding: '20px', color: '#ccc' }}>{song.played}</td>
-                                        <td style={{ padding: '20px', color: '#ccc' }}>{song.duration}</td>
+                                        <td
+                                            style={{ padding: '10px', color: '#ccc' }}
+                                            onClick={() => playSong(song)}
+                                        >
+                                            {song.releaseDate}
+                                        </td>
+                                        <td
+                                            style={{ padding: '20px', color: '#ccc' }}
+                                            onClick={() => playSong(song)}
+                                        >
+                                            {song.played}
+                                        </td>
+                                        <td
+                                            style={{ padding: '20px', color: '#ccc' }}
+                                            onClick={() => playSong(song)}
+                                        >
+                                            {song.duration}
+                                        </td>
+                                        <td style={{ padding: '20px', position: 'relative' }}>
+                                            <button
+                                                ref={(el) => setMenuButtonRef(el, song.id)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedSong(selectedSong?.id === song.id ? null : song);
+                                                }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: '#ccc',
+                                                    cursor: 'pointer',
+                                                    fontSize: '18px',
+                                                    padding: '5px',
+                                                    borderRadius: '4px',
+                                                    width: '30px',
+                                                    height: '30px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                                onMouseOver={(e) => {
+                                                    e.currentTarget.style.background = '#444';
+                                                    e.currentTarget.style.color = 'white';
+                                                }}
+                                                onMouseOut={(e) => {
+                                                    e.currentTarget.style.background = 'none';
+                                                    e.currentTarget.style.color = '#ccc';
+                                                }}
+                                            >
+                                                ⋮
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -284,6 +372,108 @@ const Dashboard: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Dropdown Portal untuk menu playlist */}
+            {selectedSong && (
+                <DropdownPortal
+                    isOpen={true}
+                    onClose={() => setSelectedSong(null)}
+                    targetElement={menuButtonsRef.current[selectedSong.id]}
+                >
+                    <div style={{
+                        background: '#2A2A2A',
+                        borderRadius: '8px',
+                        padding: '10px',
+                        minWidth: '200px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                        border: '1px solid #444'
+                    }}>
+                        <div style={{
+                            color: 'white',
+                            padding: '8px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            borderBottom: '1px solid #444',
+                            marginBottom: '5px'
+                        }}>
+                            Add to playlist
+                        </div>
+                        {playlists.length === 0 ? (
+                            <div style={{
+                                color: '#ccc',
+                                padding: '8px',
+                                fontSize: '12px',
+                                fontStyle: 'italic'
+                            }}>
+                                No playlists yet
+                            </div>
+                        ) : (
+                            playlists.map(playlist => (
+                                <div
+                                    key={playlist.id}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleAddToPlaylist(selectedSong, playlist.id);
+                                    }}
+                                    style={{
+                                        padding: '8px 12px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        color: '#ccc',
+                                        borderRadius: '4px'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.background = '#333';
+                                        e.currentTarget.style.color = 'white';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.background = 'transparent';
+                                        e.currentTarget.style.color = '#ccc';
+                                    }}
+                                >
+                                    {playlist.name}
+                                </div>
+                            ))
+                        )}
+                        <div
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowPlaylistModal(true);
+                                setSelectedSong(null);
+                            }}
+                            style={{
+                                padding: '8px 12px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                color: '#FA3689',
+                                fontWeight: '600',
+                                borderTop: '1px solid #444',
+                                marginTop: '5px',
+                                borderRadius: '4px'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.background = '#333';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                        >
+                            + New Playlist
+                        </div>
+                    </div>
+                </DropdownPortal>
+            )}
+
+            <CreatePlaylistModal
+                isOpen={showPlaylistModal}
+                onClose={() => setShowPlaylistModal(false)}
+                onCreate={(name) => {
+                    createPlaylist(name);
+                    setShowPlaylistModal(false);
+                }}
+            />
 
             {/* Add Poppins font from Google Fonts */}
             <style>

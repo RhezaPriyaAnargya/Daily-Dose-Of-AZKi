@@ -1,25 +1,54 @@
 // PlayerBar.tsx
 import React from 'react';
+import { useAudioPlayer } from '../contexts/AudioPlayerContext';
 
 const PlayerBar: React.FC = () => {
-  const song = {
-    title: 'Inochi 2024 Ver',
-    artist: 'AZKi',
-    cover: '/assets/images/inochi_2024.jpg',
-    current: '2:45',
-    duration: '3:27',
-    progress: 165 / 207 // progress (2:45/3:27)
+  const { 
+    currentSong, 
+    isPlaying, 
+    progress, 
+    duration, 
+    togglePlayPause,
+    seekTo 
+  } = useAudioPlayer();
+
+  // Format waktu dari detik ke menit:detik
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds === 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
+
+  // Hitung progress percentage
+  const progressPercentage = duration > 0 ? (progress / duration) * 100 : 0;
+
+  // Handler untuk klik progress bar
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const progressBar = e.currentTarget;
+    const clickPosition = e.clientX - progressBar.getBoundingClientRect().left;
+    const newPosition = (clickPosition / progressBar.offsetWidth) * duration;
+    seekTo(newPosition);
+  };
+
+  // Jangan render player bar jika tidak ada lagu yang dipilih
+  if (!currentSong) {
+    return null;
+  }
 
   return (
     <footer className="player-bar">
       <div className="player-bar__container">
         {/* LEFT SIDE */}
         <div className="player-bar__left">
-          <img src={song.cover} alt={song.title} className="player-bar__cover" />
+          <img 
+            src={`/assets/images/${currentSong.cover}`} 
+            alt={currentSong.title} 
+            className="player-bar__cover" 
+          />
           <div className="player-bar__info">
-            <div className="player-bar__title">{song.title}</div>
-            <div className="player-bar__artist">{song.artist}</div>
+            <div className="player-bar__title">{currentSong.title}</div>
+            <div className="player-bar__artist">AZKi</div>
           </div>
         </div>
 
@@ -32,11 +61,23 @@ const PlayerBar: React.FC = () => {
             </svg>
           </button>
 
-          <button className="player-bar__icon-btn player-bar__icon-btn--main" aria-label="Pause">
+          <button 
+            className="player-bar__icon-btn player-bar__icon-btn--main" 
+            aria-label={isPlaying ? "Pause" : "Play"}
+            onClick={togglePlayPause}
+          >
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="12" fill="#FA3689" />
-              <rect x="9" y="8" width="2.5" height="8" rx="1" fill="#fff" />
-              <rect x="12.5" y="8" width="2.5" height="8" rx="1" fill="#fff" />
+              {isPlaying ? (
+                // Icon Pause
+                <>
+                  <rect x="9" y="8" width="2.5" height="8" rx="1" fill="#fff" />
+                  <rect x="12.5" y="8" width="2.5" height="8" rx="1" fill="#fff" />
+                </>
+              ) : (
+                // Icon Play
+                <path d="M10 8L16 12L10 16V8Z" fill="#fff" />
+              )}
             </svg>
           </button>
 
@@ -50,18 +91,21 @@ const PlayerBar: React.FC = () => {
 
         {/* RIGHT SIDE - Timer */}
         <div className="player-bar__right">
-          <span className="player-bar__time">{song.current}</span>
+          <span className="player-bar__time">{formatTime(progress)}</span>
           <span className="player-bar__time-separator">/</span>
-          <span className="player-bar__time">{song.duration}</span>
+          <span className="player-bar__time">{formatTime(duration)}</span>
         </div>
       </div>
       
       {/* Progress Bar - Now positioned at the bottom */}
       <div className="player-bar__progress-container">
-        <div className="player-bar__progress-bar">
+        <div 
+          className="player-bar__progress-bar"
+          onClick={handleProgressClick}
+        >
           <div 
             className="player-bar__progress" 
-            style={{ width: `${song.progress * 100}%` }} 
+            style={{ width: `${progressPercentage}%` }} 
           />
         </div>
       </div>
