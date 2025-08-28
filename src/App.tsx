@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import PlayerBar from './components/PlayerBar';
 import Dashboard from './pages/Dashboard';
 import Playlist from './pages/Playlist';
+import DetailPlaylist from './pages/DetailPlaylist'; // Import baru
 import MoodRecommender from './pages/MoodRecommender';
 import About from './pages/About';
 import { AudioPlayerProvider } from './contexts/AudioPlayerContext';
@@ -22,6 +23,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/playlist" element={<Playlist />} />
+                <Route path="/playlist/:playlistId" element={<DetailPlaylist />} /> {/* Route baru */}
                 <Route path="/mood" element={<MoodRecommender />} />
                 <Route path="/about" element={<About />} />
               </Routes>

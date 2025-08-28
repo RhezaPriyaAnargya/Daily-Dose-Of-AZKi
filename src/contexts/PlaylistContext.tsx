@@ -1,4 +1,4 @@
-// src/contexts/PlaylistContext.tsx
+// src/contexts/PlaylistContext.tsx (tambahkan fungsi updatePlaylist)
 import React, { createContext, useContext, useState } from 'react';
 
 export type Playlist = {
@@ -14,6 +14,7 @@ interface PlaylistContextType {
     addSongToPlaylist: (playlistId: string, song: any) => void;
     removeSongFromPlaylist: (playlistId: string, songId: string) => void;
     deletePlaylist: (playlistId: string) => void;
+    updatePlaylist: (playlistId: string, newName: string) => void; // Tambahkan ini
 }
 
 const PlaylistContext = createContext<PlaylistContextType | undefined>(undefined);
@@ -27,7 +28,7 @@ export const usePlaylist = () => {
 };
 
 interface PlaylistProviderProps {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({ children }) => {
@@ -55,6 +56,7 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({ children }) 
         }));
     };
 
+    // Di PlaylistContext.tsx, pastikan ada fungsi ini:
     const removeSongFromPlaylist = (playlistId: string, songId: string) => {
         setPlaylists(prev => prev.map(playlist => {
             if (playlist.id === playlistId) {
@@ -68,13 +70,24 @@ export const PlaylistProvider: React.FC<PlaylistProviderProps> = ({ children }) 
         setPlaylists(prev => prev.filter(playlist => playlist.id !== playlistId));
     };
 
+    // Tambahkan fungsi updatePlaylist
+    const updatePlaylist = (playlistId: string, newName: string) => {
+        setPlaylists(prev => prev.map(playlist => {
+            if (playlist.id === playlistId) {
+                return { ...playlist, name: newName };
+            }
+            return playlist;
+        }));
+    };
+
     return (
         <PlaylistContext.Provider value={{
             playlists,
             createPlaylist,
             addSongToPlaylist,
-            removeSongFromPlaylist,
-            deletePlaylist
+            removeSongFromPlaylist, // Pastikan ini ada
+            deletePlaylist,
+            updatePlaylist
         }}>
             {children}
         </PlaylistContext.Provider>

@@ -2,13 +2,16 @@
 import React, { useState } from 'react';
 import { usePlaylist } from '../contexts/PlaylistContext';
 import CreatePlaylistModal from '../components/CreatePlaylistModal';
-import { useAudioPlayer } from '../contexts/AudioPlayerContext';
+import { useNavigate } from 'react-router-dom';
 
 const Playlist: React.FC = () => {
   const { playlists, deletePlaylist, createPlaylist } = usePlaylist();
-  const { playSong } = useAudioPlayer();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const navigate = useNavigate();
 
+  const handlePlaylistClick = (playlistId: string) => {
+    navigate(`/playlist/${playlistId}`);
+  };
 
   return (
     <div style={{
@@ -63,98 +66,95 @@ const Playlist: React.FC = () => {
         {/* Playlist Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
           gap: '20px'
         }}>
-          {playlists.map(playlist => (
-            <div
-              key={playlist.id}
-              style={{
-                background: '#2A2A2A',
-                borderRadius: '12px',
-                padding: '20px',
-                transition: 'transform 0.2s'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px' }}>
-                <h3 style={{
-                  margin: 0,
-                  fontSize: '1.2rem',
-                  fontWeight: '600',
-                  color: '#FA3689'
+          {playlists.map(playlist => {
+            const firstSong = playlist.songs[0];
+            
+            return (
+              <div
+                key={playlist.id}
+                style={{
+                  background: '#2A2A2A',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  transition: 'transform 0.2s',
+                  cursor: 'pointer'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+                onClick={() => handlePlaylistClick(playlist.id)}
+              >
+                {/* Cover Image */}
+                <div style={{
+                  height: '180px',
+                  background: firstSong 
+                    ? `url(/assets/images/${firstSong.cover}) center/cover`
+                    : 'linear-gradient(135deg, #FA3689 0%, #7A3CFF 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
                 }}>
-                  {playlist.name}
-                </h3>
-                <button
-                  onClick={() => deletePlaylist(playlist.id)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#ccc',
-                    cursor: 'pointer',
-                    fontSize: '16px'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div style={{ marginTop: '15px' }}>
-                {playlist.songs.length === 0 ? (
-                  <p style={{ color: '#ccc', fontStyle: 'italic', margin: 0 }}>
-                    No songs in this playlist yet
-                  </p>
-                ) : (
-                  playlist.songs.slice(0, 3).map((song, index) => (
-                    <div
-                      key={song.id}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '8px 0',
-                        borderBottom: index < Math.min(playlist.songs.length, 3) - 1 ? '1px solid #333' : 'none',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => playSong(song)}
-                    >
-                      <img
-                        src={`/assets/images/${song.cover}`}
-                        alt={song.title}
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '6px',
-                          marginRight: '10px'
-                        }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', fontWeight: '500' }}>{song.title}</div>
-                        <div style={{ fontSize: '12px', color: '#ccc' }}>AZKi</div>
-                      </div>
+                  {!firstSong && (
+                    <div style={{
+                      fontSize: '48px',
+                      color: 'white',
+                      opacity: '0.7'
+                    }}>
+                      ♫
                     </div>
-                  ))
-                )}
-
-                {playlist.songs.length > 3 && (
-                  <div style={{
-                    color: '#FA3689',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    marginTop: '10px',
-                    cursor: 'pointer'
-                  }}>
-                    + {playlist.songs.length - 3} more songs
+                  )}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      background: 'rgba(0,0,0,0.7)',
+                      borderRadius: '50%',
+                      width: '30px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePlaylist(playlist.id);
+                    }}
+                  >
+                    ×
                   </div>
-                )}
+                </div>
+
+                {/* Playlist Info */}
+                <div style={{ padding: '15px' }}>
+                  <h3 style={{
+                    margin: '0 0 5px 0',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    color: '#FA3689'
+                  }}>
+                    {playlist.name}
+                  </h3>
+                  
+                  <p style={{
+                    margin: '0',
+                    color: '#ccc',
+                    fontSize: '0.9rem'
+                  }}>
+                    {playlist.songs.length} {playlist.songs.length === 1 ? 'Track' : 'Tracks'}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {playlists.length === 0 && (
@@ -173,11 +173,10 @@ const Playlist: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onCreate={(name) => {
-          createPlaylist(name); // <-- gunakan di sini
+          createPlaylist(name);
           setShowCreateModal(false);
         }}
       />
-
 
       <style>
         {`
