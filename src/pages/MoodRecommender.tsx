@@ -1,216 +1,177 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAudioPlayer } from '../contexts/AudioPlayerContext';
-import { usePlaylist } from '../contexts/PlaylistContext';
-import CreatePlaylistModal from '../components/CreatePlaylistModal';
-import DropdownPortal from '../components/DropdownPortal';
+import React, { useState } from 'react';
 
-type Song = {
-    id: string;
-    title: string;
-    file: string;
-    cover: string;
-    duration: string;
-    mood: string[];
-    description: string;
-    releaseDate?: string;
-    played?: string;
-};
+
 
 const MoodRecommender: React.FC = () => {
     const [moodInput, setMoodInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [recommendedSongs, setRecommendedSongs] = useState<Song[]>([]);
-    const [showAll, setShowAll] = useState(false);
-    const [showPlaylistModal, setShowPlaylistModal] = useState(false);
-    const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+    const [recommendation, setRecommendation] = useState('');
     const [error, setError] = useState<string | null>(null);
-    
-    const { playlists, addSongToPlaylist, createPlaylist } = usePlaylist();
-    const { playSong, currentSong, isPlaying } = useAudioPlayer();
-    
-    const menuButtonsRef = useRef<{ [key: string]: HTMLElement | null }>({});
 
-    // Daftar lagu yang tersedia
-    const availableSongs: Song[] = [
-        {
-            id: "1",
-            title: "INOCHI 2024 Ver",
-            file: "Inochi(2024 ver.).flac",
-            cover: "AZKi-Inochi.jpg",
-            duration: "4:32",
-            mood: ["emotional", "uplifting", "inspiring", "deep", "meaningful"],
-            description: "Refleksi matang tentang hidup, eksistensi, dan hubungan antara penyanyi dengan pendengar.",
-            releaseDate: "July 24, 2024",
-            played: "487.040"
-        },
-        {
-            id: "2",
-            title: "未来キャンペーネラ",
-            file: "Mirai-Campanella.flac",
-            cover: "AZKi-Mirai-Campanella.jpg",
-            duration: "3:48",
-            mood: ["energetic", "happy", "upbeat", "positive", "joyful"],
-            description: "Lagu tentang pencarian jati diri, keberanian menghadapi ketakutan, dan keyakinan bahwa suara hati dapat menuntun kita menuju masa depan.",
-            releaseDate: "July 2, 2025",
-            played: "96.423"
-        },
-        {
-            id: "3",
-            title: "Creating World",
-            file: "Creating-World.flac",
-            cover: "AZKi-Creating-World.jpg",
-            duration: "4:22",
-            mood: ["chill", "relaxing", "calm", "peaceful", "soothing"],
-            description: "Lagu tentang membangun masa depan bersama melalui musik dan perjalanan dari keraguan menuju cahaya dan harapan.",
-            releaseDate: "December 28, 2018",
-            played: "761.000"
-        },
-        {
-            id: "4",
-            title: "Without U",
-            file: "Without-U.flac",
-            cover: "AZKi-without-U-300x300.jpg",
-            duration: "4:41",
-            mood: ["emotional", "deep", "sad", "melancholic", "heartfelt"],
-            description: "Lagu tentang kebersamaan, rasa terima kasih, dan makna eksistensi melalui hubungan dengan orang lain.",
-            releaseDate: "November 12, 2019",
-            played: "384.000"
-        },
-        {
-            id: "5",
-            title: "Inochi",
-            file: "Inochi.flac",
-            cover: "AZKi-Inochi2019.jpg",
-            duration: "4:31",
-            mood: ["emotional", "uplifting", "powerful", "dramatic", "meaningful"],
-            description: "Lagu yang menggali arti hidup, eksistensi, dan hubungan antara penyanyi dengan pendengar.",
-            releaseDate: "April 30, 2019",
-            played: "1.682.342"
-        }
-    ];
 
-    // Fungsi untuk memanggil API Replicate dengan Granite AI
-    const getAIRecocommendations = async (mood: string) => {
-        setError(null);
-        
-        // Data lagu yang akan dikenali oleh AI
-        const songsData = availableSongs.map(song => ({
-            title: song.title,
-            mood: song.mood.join(', '),
-            description: song.description
-        }));
-        
-        try {
-            // Ganti dengan API key Replicate Anda
-            const REPLICATE_API_KEY = "r8_2jkMgtRODBwYBOwCg2AvUtfnr2k7VoJ091kUG";
-            const API_URL = "https://api.replicate.com/v1/predictions";
-            
-            // Prompt yang dioptimalkan untuk Granite AI
-            const prompt = `
-                Anda adalah sistem rekomendasi musik yang ahli. 
-                Berdasarkan mood pengguna: "${mood}", 
-                rekomendasikan lagu-lagu dari daftar berikut yang paling sesuai:
-                
-                ${JSON.stringify(songsData, null, 2)}
-                
-                Berikan hasil dalam format JSON array dengan urutan dari yang paling sesuai:
-                [{"id": "1", "reason": "Alasan sesuai dengan mood"}, ...]
-                
-                Hanya gunakan ID yang ada dalam daftar di atas.
-            `;
-            
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Token ${REPLICATE_API_KEY}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    version: "da6a4c6d475f4d5ce9b6c2b797a0c76b01fca1ce6af321417543c0c0b7a7b8c8", // Granite model version
-                    input: {
-                        prompt: prompt,
-                        max_length: 1000,
-                        temperature: 0.7,
-                        top_p: 0.9
-                    }
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            // Polling untuk mendapatkan hasil (karena Replicate API async)
-            let result = null;
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            while (attempts < maxAttempts) {
-                const statusResponse = await fetch(`${API_URL}/${data.id}`, {
-                    headers: {
-                        "Authorization": `Token ${REPLICATE_API_KEY}`,
-                        "Content-Type": "application/json",
-                    }
-                });
-                
-                const statusData = await statusResponse.json();
-                
-                if (statusData.status === "succeeded") {
-                    result = statusData.output;
-                    break;
-                } else if (statusData.status === "failed") {
-                    throw new Error("AI processing failed");
-                }
-                
-                // Tunggu 1 detik sebelum polling lagi
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                attempts++;
-            }
-            
-            if (!result) {
-                throw new Error("Timeout waiting for AI response");
-            }
-            
-            // Parse hasil AI
-            try {
-                // Ekstrak JSON dari respon AI
-                const jsonMatch = result.join('').match(/\[.*\]/s);
-                if (!jsonMatch) {
-                    throw new Error("Invalid AI response format");
-                }
-                
-                const recommendations = JSON.parse(jsonMatch[0]);
-                
-                // Map hasil AI ke daftar lagu
-                const recommendedSongs = recommendations
-                    .map((rec: any) => {
-                        const song = availableSongs.find(s => s.id === rec.id);
-                        return song ? {...song, aiReason: rec.reason} : null;
-                    })
-                    .filter((song: any) => song !== null);
-                
-                return recommendedSongs;
-            } catch (parseError) {
-                console.error("Error parsing AI response:", parseError);
-                // Fallback ke filtering sederhana jika parsing gagal
-                return getFallbackRecommendations(mood);
-            }
-            
-        } catch (error) {
-            console.error("Error calling Replicate API:", error);
-            // Fallback ke metode sederhana jika API gagal
-            return getFallbackRecommendations(mood);
+
+    // Daftar lagu AZKI
+    const azkiSongs = [
+        {
+            "title": "Creating world",
+            "mood": ["dreamy", "uplifting", "inspirational", "semangat", "optimis", "bahagia"],
+            "description": "Lagu tentang membangun dunia dan masa depan yang penuh harapan."
+        },
+        {
+            "title": "RealMelancholy",
+            "mood": ["melancholic", "emotional", "reflective", "sedih", "galau", "merenung"],
+            "description": "Ekspresi mendalam tentang perasaan melankolis dan renungan hati."
+        },
+        {
+            "title": "Felicia",
+            "mood": ["warm", "nostalgic", "gentle", "nostalgia", "bahagia", "tenang"],
+            "description": "Lagu yang hangat dan nostalgia tentang kenangan indah."
+        },
+        {
+            "title": "I can't control myself",
+            "mood": ["intense", "dramatic", "energetic", "marah", "emosi", "semangat"],
+            "description": "Ekspresi intens tentang perasaan yang tak terkendali."
+        },
+        {
+            "title": "hikari no machi",
+            "mood": ["bright", "hopeful", "soft", "bahagia", "optimis", "tenang"],
+            "description": "Lagu tentang kota cahaya dan harapan yang bersinar."
+        },
+        {
+            "title": "Starry Regrets",
+            "mood": ["melancholic", "ethereal", "emotional", "sedih", "merenung", "galau"],
+            "description": "Penyesalan yang terangkai bagai bintang di langit malam."
+        },
+        {
+            "title": "Fake.Fake.Fake",
+            "mood": ["edgy", "energetic", "bold", "marah", "semangat", "pemberontak"],
+            "description": "Ekspresi tentang kepalsuan dan pencarian keaslian diri."
+        },
+        {
+            "title": "inochi",
+            "mood": ["emotional", "powerful", "motivational", "haru", "semangat", "inspirasi"],
+            "description": "Refleksi mendalam tentang arti kehidupan dan eksistensi."
+        },
+        {
+            "title": "shit days",
+            "mood": ["angsty", "raw", "cathartic", "marah", "frustrasi", "lelah"],
+            "description": "Ekspresi jujur tentang hari-hari sulit dan perasaan frustasi."
+        },
+        {
+            "title": "Sayonara Hero",
+            "mood": ["sad", "bittersweet", "nostalgic", "sedih", "haru", "nostalgia"],
+            "description": "Perpisahan dengan pahlawan dan kenangan yang tertinggal."
+        },
+        {
+            "title": "from A to Z",
+            "mood": ["emotional", "uplifting", "heartfelt", "haru", "semangat", "bahagia"],
+            "description": "Perjalanan lengkap dari awal sampai akhir dengan penuh perasaan."
+        },
+        {
+            "title": "ERROR",
+            "mood": ["glitchy", "edgy", "tension", "bingung", "marah", "tegang"],
+            "description": "Ekspresi tentang kesalahan dan ketidaksempurnaan dalam sistem."
+        },
+        {
+            "title": "without U",
+            "mood": ["reflective", "melancholic", "emotional", "sedih", "kesepian", "merenung"],
+            "description": "Perasaan kehilangan dan kesendirian tanpa seseorang yang spesial."
+        },
+        {
+            "title": "Kotonoha",
+            "mood": ["gentle", "poetic", "dreamy", "tenang", "indah", "puitis"],
+            "description": "Kata-kata yang lembut dan penuh makna seperti puisi."
+        },
+        {
+            "title": "LiE,LiE,LiE,LiE",
+            "mood": ["playful", "quirky", "energetic", "ceria", "lucu", "unik"],
+            "description": "Permainan kata tentang kebohongan dengan irama yang catchy."
+        },
+        {
+            "title": "Inochi (2024 ver.)",
+            "mood": ["emotional", "powerful", "uplifting", "haru", "semangat", "inspirasi"],
+            "description": "Versi terbaru dari lagu Inochi dengan aransemen yang diperbaharui."
+        },
+        {
+            "title": "Lazy",
+            "mood": ["laid-back", "smooth", "cool", "santai", "tenang", "nyantai"],
+            "description": "Lagu dengan nuansa santai dan atmosfer keren."
+        },
+        {
+            "title": "Entropy",
+            "mood": ["tense", "dynamic", "electronic", "tegang", "energetik", "futuristik"],
+            "description": "Energi elektronik yang dinamis dan penuh ketegangan."
+        },
+        {
+            "title": "My Strategy!",
+            "mood": ["motivational", "energetic", "determined", "semangat", "strategi", "percaya diri"],
+            "description": "Semangat strategi dan tekad yang kuat dalam menghadapi tantangan."
+        },
+        {
+            "title": "Operation Z",
+            "mood": ["action-oriented", "pumping", "energetic", "aksi", "semangat", "dramatik"],
+            "description": "Nuansa aksi penuh semangat dan adrenalin."
+        },
+        {
+            "title": "Chaotic inner world",
+            "mood": ["chaotic", "intense", "psychological", "bingung", "introspektif", "gelisah"],
+            "description": "Pergulatan batin dan dunia yang kacau dalam diri."
+        },
+        {
+            "title": "Akenai yoru ga attanara",
+            "mood": ["moody", "hopeful", "nighttime", "malam", "harapan", "sunyi"],
+            "description": "Nuansa malam tanpa akhir dengan harapan yang tersembunyi."
+        },
+        {
+            "title": "étranger",
+            "mood": ["mysterious", "elegant", "melancholic", "misterius", "anggun", "sedih"],
+            "description": "Keanggunan misterius yang melankolis."
+        },
+        {
+            "title": "Gogo 8-ji no Kōrasu Song",
+            "mood": ["nostalgic", "warm", "afternoon", "nostalgia", "hangat", "siang"],
+            "description": "Hangatnya nostalgia di sore hari dengan harmoni koral."
+        },
+        {
+            "title": "Yoru no Rinkaku",
+            "mood": ["dark", "mystical", "nighttime", "gelap", "misteri", "malam"],
+            "description": "Misteri gelap dalam kontur malam yang memikat."
+        },
+        {
+            "title": "map in the cup",
+            "mood": ["whimsical", "creative", "uplifting", "imajinatif", "cerdas", "gembira"],
+            "description": "Kreasi imajinatif yang mengangkat suasana penuh kebahagiaan."
+        },
+        {
+            "title": "End roll wa Owaranai",
+            "mood": ["bittersweet", "emotional", "nostalgic", "sedih", "haru", "perpisahan"],
+            "description": "Tentang akhir yang terus berjalan seperti gulungan akhir dalam cerita."
+        },
+        {
+            "title": "Ai Fukaku",
+            "mood": ["deep", "emotional", "serene", "tenang", "mendalam", "sedih"],
+            "description": "Ekspresi perasaan mendalam seperti lautan biru yang tenang."
+        },
+        {
+            "title": "FreeGeo",
+            "mood": ["free", "uplifting", "light", "riang", "ringan", "bebas"],
+            "description": "Rasa kebebasan yang ringan dan menyegarkan."
+        },
+        {
+            "title": "ω neko",
+            "mood": ["playful", "cute", "quirky", "imajinatif", "ceria", "lucu"],
+            "description": "Ekspresi imut dan nakal seperti kucing omega yang imajinatif."
         }
-    };
+    ]
+        ;
+
 
     // Fallback method jika AI tidak tersedia
     const getFallbackRecommendations = (mood: string) => {
         const moodKeywords = mood.toLowerCase().split(' ');
-        
+
         // Beri skor untuk setiap lagu berdasarkan kecocokan mood
-        const scoredSongs = availableSongs.map(song => {
+        const scoredSongs = azkiSongs.map(song => {
             let score = 0;
             moodKeywords.forEach(keyword => {
                 if (song.mood.some(m => m.includes(keyword))) {
@@ -225,50 +186,45 @@ const MoodRecommender: React.FC = () => {
             });
             return { ...song, score };
         });
-        
-        // Urutkan berdasarkan skor tertinggi
-        return scoredSongs
+
+        // Urutkan berdasarkan skor tertinggi dan ambil 3 teratas
+        const topSongs = scoredSongs
             .filter(song => song.score > 0)
-            .sort((a, b) => b.score - a.score);
-    };
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3);
 
-    const handleAddToPlaylist = (song: Song, playlistId: string) => {
-        addSongToPlaylist(playlistId, song);
-        setSelectedSong(null);
-    };
+        if (topSongs.length === 0) {
+            return `Maaf, tidak ada rekomendasi khusus untuk mood "${mood}". Coba gunakan kata kunci yang berbeda seperti happy, sad, energetic, atau calm.`;
+        }
 
-    const setMenuButtonRef = (element: HTMLElement | null, songId: string) => {
-        menuButtonsRef.current[songId] = element;
+        // Generate text recommendation
+        let recommendationText = `Berdasarkan mood "${mood}" Anda, saya merekomendasikan lagu-lagu AZKI berikut:\n\n`;
+
+        topSongs.forEach((song, index) => {
+            recommendationText += `${index + 1}. ${song.title} - ${song.description} Lagu ini cocok karena memiliki mood ${song.mood.join(', ')}.\n\n`;
+        });
+
+        recommendationText += "Dengarkanlah lagu-lagu ini untuk menemukan ketenangan atau semangat yang Anda butuhkan. AZKI selalu punya lagu yang tepat untuk setiap perasaan!";
+
+        return recommendationText;
     };
 
     const getRecommendations = async () => {
         if (!moodInput.trim()) return;
-        
+
         setIsLoading(true);
-        
-        try {
-            // Gunakan AI untuk mendapatkan rekomendasi
-            const recommendations = await getAIRecocommendations(moodInput);
-            setRecommendedSongs(recommendations);
-            
-        } catch (error) {
-            console.error("Error getting recommendations:", error);
-            setError("Failed to get recommendations. Please try again.");
-            // Fallback: show all songs if API fails
-            setRecommendedSongs(availableSongs);
-        } finally {
-            setIsLoading(false);
-        }
+        setError(null);
+
+        // Langsung gunakan fallback recommendation
+        const fallbackRecommendation = getFallbackRecommendations(moodInput);
+        setRecommendation(fallbackRecommendation);
+        setIsLoading(false);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         getRecommendations();
     };
-
-    // Only show 5 songs at first, show all if showAll is true
-    const initialVisible = 5;
-    const visibleSongs = showAll ? recommendedSongs : recommendedSongs.slice(0, initialVisible);
 
     return (
         <div style={{
@@ -278,7 +234,7 @@ const MoodRecommender: React.FC = () => {
             padding: '20px',
             fontFamily: '"Poppins", sans-serif'
         }}>
-            <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
                 {/* Header */}
                 <h2 style={{
                     textAlign: 'center',
@@ -291,14 +247,14 @@ const MoodRecommender: React.FC = () => {
                 }}>
                     MOOD RECOMMENDER
                 </h2>
-                
+
                 <p style={{
                     textAlign: 'center',
                     color: '#ccc',
                     marginBottom: '40px',
                     fontSize: '16px'
                 }}>
-                    Powered by Granite AI - Describe your mood and get personalized song recommendations
+                    Type your mood below and get a song recommendation
                 </p>
 
                 {/* Error Message */}
@@ -341,10 +297,10 @@ const MoodRecommender: React.FC = () => {
                                 outline: 'none'
                             }}
                             onFocus={(e) => {
-                                e.target.style.borderColor = '#FA3689';
+                                e.currentTarget.style.borderColor = '#FA3689';
                             }}
                             onBlur={(e) => {
-                                e.target.style.borderColor = '#444';
+                                e.currentTarget.style.borderColor = '#444';
                             }}
                         />
                         <button
@@ -377,7 +333,7 @@ const MoodRecommender: React.FC = () => {
                         >
                             {isLoading ? (
                                 <span>
-                                    <i className="fas fa-spinner fa-spin" style={{marginRight: '8px'}}></i>
+                                    <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
                                     Analyzing...
                                 </span>
                             ) : (
@@ -387,17 +343,28 @@ const MoodRecommender: React.FC = () => {
                     </div>
                 </form>
 
-                {/* Recommendations Section */}
-                {recommendedSongs.length > 0 && (
-                    <div>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px'}}>
+                {/* Recommendation Output */}
+                {recommendation && (
+                    <div style={{
+                        background: '#2A2A2A',
+                        borderRadius: '16px',
+                        padding: '30px',
+                        marginBottom: '40px',
+                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginBottom: '20px'
+                        }}>
                             <h3 style={{
                                 fontWeight: '600',
                                 fontSize: '24px',
-                                color: 'white',
+                                color: '#FA3689',
                                 margin: 0
                             }}>
-                                AI Recommendations
+                                Recommendation
                             </h3>
                             <div style={{
                                 color: '#FA3689',
@@ -406,178 +373,24 @@ const MoodRecommender: React.FC = () => {
                                 padding: '6px 12px',
                                 borderRadius: '20px'
                             }}>
-                                <i className="fas fa-robot" style={{marginRight: '6px'}}></i>
-                                Powered by Granite AI
+                                <i className="fas fa-robot" style={{ marginRight: '6px' }}></i>
+                                Powered by Basic Recommendation
                             </div>
                         </div>
 
                         <div style={{
-                            background: '#2A2A2A',
-                            borderRadius: '16px',
-                            overflow: 'hidden',
-                            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-                            fontFamily: "Poppins"
+                            color: '#ddd',
+                            lineHeight: '1.6',
+                            fontSize: '16px',
+                            whiteSpace: 'pre-line'
                         }}>
-                            <table style={{
-                                width: '100%',
-                                borderCollapse: 'collapse',
-                                fontSize: '15px'
-                            }}>
-                                <thead>
-                                    <tr style={{
-                                        background: '#232323',
-                                        color: '#FFFF',
-                                        textAlign: 'left',
-                                        fontWeight: '400',
-                                        letterSpacing: '1px',
-                                    }}>
-                                        <th style={{ padding: '20px', width: '10%' }}>No</th>
-                                        <th style={{ padding: '20px', width: '35%' }}>Name</th>
-                                        <th style={{ padding: '10px', width: '20%' }}>Release Date</th>
-                                        <th style={{ padding: '20px', width: '15%' }}>Played</th>
-                                        <th style={{ padding: '20px', width: '15%' }}>Time</th>
-                                        <th style={{ padding: '20px', width: '5%' }}></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {visibleSongs.map((song, index) => (
-                                        <tr
-                                            key={song.id}
-                                            style={{
-                                                borderBottom: index < visibleSongs.length - 1 ? '1px solid #333' : 'none',
-                                                transition: 'background 0.2s ease',
-                                                cursor: 'pointer'
-                                            }}
-                                            onMouseOver={(e) => {
-                                                e.currentTarget.style.background = '#333';
-                                            }}
-                                            onMouseOut={(e) => {
-                                                e.currentTarget.style.background = 'transparent';
-                                            }}
-                                        >
-                                            <td
-                                                style={{ padding: '20px', fontWeight: '500' }}
-                                                onClick={() => playSong(song)}
-                                            >
-                                                {index + 1}
-                                            </td>
-                                            <td
-                                                style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}
-                                                onClick={() => playSong(song)}
-                                            >
-                                                <img
-                                                    src={`/assets/images/${song.cover}`}
-                                                    alt={song.title}
-                                                    style={{
-                                                        width: '50px',
-                                                        height: '50px',
-                                                        borderRadius: '8px',
-                                                        objectFit: 'cover'
-                                                    }}
-                                                />
-                                                <div>
-                                                    <div style={{ fontWeight: '500' }}>{song.title}</div>
-                                                    {(song as any).aiReason && (
-                                                        <div style={{
-                                                            fontSize: '12px',
-                                                            color: '#FA3689',
-                                                            marginTop: '4px'
-                                                        }}>
-                                                            {(song as any).aiReason}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td
-                                                style={{ padding: '10px', color: '#ccc' }}
-                                                onClick={() => playSong(song)}
-                                            >
-                                                {song.releaseDate}
-                                            </td>
-                                            <td
-                                                style={{ padding: '20px', color: '#ccc' }}
-                                                onClick={() => playSong(song)}
-                                            >
-                                                {song.played}
-                                            </td>
-                                            <td
-                                                style={{ padding: '20px', color: '#ccc' }}
-                                                onClick={() => playSong(song)}
-                                            >
-                                                {song.duration}
-                                            </td>
-                                            <td style={{ padding: '20px', position: 'relative' }}>
-                                                <button
-                                                    ref={(el) => setMenuButtonRef(el, song.id)}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedSong(selectedSong?.id === song.id ? null : song);
-                                                    }}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: '#ccc',
-                                                        cursor: 'pointer',
-                                                        fontSize: '18px',
-                                                        padding: '5px',
-                                                        borderRadius: '4px',
-                                                        width: '30px',
-                                                        height: '30px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                    onMouseOver={(e) => {
-                                                        e.currentTarget.style.background = '#444';
-                                                        e.currentTarget.style.color = 'white';
-                                                    }}
-                                                    onMouseOut={(e) => {
-                                                        e.currentTarget.style.background = 'none';
-                                                        e.currentTarget.style.color = '#ccc';
-                                                    }}
-                                                >
-                                                    ⋮
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            {recommendation}
                         </div>
-
-                        {/* Show More Button */}
-                        {!showAll && recommendedSongs.length > initialVisible && (
-                            <div style={{ textAlign: 'center', marginTop: '30px' }}>
-                                <button
-                                    style={{
-                                        background: '#FA3689',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '8px',
-                                        padding: '12px 40px',
-                                        fontWeight: 500,
-                                        fontSize: '16px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        boxShadow: '0 2px 8px rgba(250, 54, 137, 0.15)'
-                                    }}
-                                    onClick={() => setShowAll(true)}
-                                    onMouseOver={e => {
-                                        e.currentTarget.style.background = '#e02578';
-                                    }}
-                                    onMouseOut={e => {
-                                        e.currentTarget.style.background = '#FA3689';
-                                    }}
-                                >
-                                    Show More
-                                </button>
-                            </div>
-                        )}
                     </div>
                 )}
 
                 {/* Empty State */}
-                {!isLoading && recommendedSongs.length === 0 && moodInput && (
+                {!isLoading && !recommendation && moodInput && (
                     <div style={{
                         textAlign: 'center',
                         color: '#ccc',
@@ -589,120 +402,11 @@ const MoodRecommender: React.FC = () => {
                 )}
             </div>
 
-            {/* Dropdown Portal untuk menu playlist */}
-            {selectedSong && (
-                <DropdownPortal
-                    isOpen={true}
-                    onClose={() => setSelectedSong(null)}
-                    targetElement={menuButtonsRef.current[selectedSong.id]}
-                >
-                    <div style={{
-                        background: '#2A2A2A',
-                        borderRadius: '8px',
-                        padding: '10px',
-                        minWidth: '200px',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-                        border: '1px solid #444'
-                    }}>
-                        <div style={{
-                            color: 'white',
-                            padding: '8px',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            borderBottom: '1px solid #444',
-                            marginBottom: '5px'
-                        }}>
-                            Add to playlist
-                        </div>
-                        {playlists.length === 0 ? (
-                            <div style={{
-                                color: '#ccc',
-                                padding: '8px',
-                                fontSize: '12px',
-                                fontStyle: 'italic'
-                            }}>
-                                No playlists yet
-                            </div>
-                        ) : (
-                            playlists.map(playlist => (
-                                <div
-                                    key={playlist.id}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        handleAddToPlaylist(selectedSong, playlist.id);
-                                    }}
-                                    style={{
-                                        padding: '8px 12px',
-                                        cursor: 'pointer',
-                                        fontSize: '14px',
-                                        color: '#ccc',
-                                        borderRadius: '4px'
-                                    }}
-                                    onMouseOver={(e) => {
-                                        e.currentTarget.style.background = '#333';
-                                        e.currentTarget.style.color = 'white';
-                                    }}
-                                    onMouseOut={(e) => {
-                                        e.currentTarget.style.background = 'transparent';
-                                        e.currentTarget.style.color = '#ccc';
-                                    }}
-                                >
-                                    {playlist.name}
-                                </div>
-                            ))
-                        )}
-                        <div
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setShowPlaylistModal(true);
-                                setSelectedSong(null);
-                            }}
-                            style={{
-                                padding: '8px 12px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                color: '#FA3689',
-                                fontWeight: '600',
-                                borderTop: '1px solid #444',
-                                marginTop: '5px',
-                                borderRadius: '4px'
-                            }}
-                            onMouseOver={(e) => {
-                                e.currentTarget.style.background = '#333';
-                            }}
-                            onMouseOut={(e) => {
-                                e.currentTarget.style.background = 'transparent';
-                            }}
-                        >
-                            + New Playlist
-                        </div>
-                    </div>
-                </DropdownPortal>
-            )}
-
-            <CreatePlaylistModal
-                isOpen={showPlaylistModal}
-                onClose={() => setShowPlaylistModal(false)}
-                onCreate={(name) => {
-                    createPlaylist(name);
-                    setShowPlaylistModal(false);
-                }}
-            />
-
             <style>
                 {`
-                    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-                    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
-                    body {
-                        font-family: 'Poppins', sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        background: #1B1B1B;
-                        color: white;
-                    }
-                `}
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+          @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        `}
             </style>
         </div>
     );
