@@ -70,9 +70,9 @@ const About: React.FC = () => {
               lineHeight: '1.6',
               textAlign: 'center'
             }}>
-              AZKi, atau dikenal juga sebagai Virtual Diva AZKi, adalah VTuber penyanyi solo dari Hololive Production. Ia tergabung dalam Generasi 0 bersama Tokino Sora, Roboco-san, Sakura Miko, dan Hoshimachi Suisei. AZKi memulai debutnya pada 15 November 2018 melalui video cover Just Be Friends.
-              Sebagai “diva virtual yang dibangkitkan kembali di dunia maya untuk mencipta dunia baru,” AZKi dikenal dengan suara yang emosional, penuh kekuatan, dan mampu menyampaikan perasaan mendalam lewat musik. Ia tidak terpaku pada satu genre, melainkan mengeksplorasi berbagai gaya musik mulai dari pop, rock, elektronik, hingga balada.
-              Awalnya bernaung di bawah label INoNaKa Music, sejak 1 April 2022 AZKi resmi pindah ke cabang utama Hololive. Hingga kini, ia terus berkarya melalui konser virtual, kolaborasi lintas artis, serta merilis lagu-lagu orisinal yang memperkuat posisinya sebagai ikon musik virtual.
+              AZKi, atau Virtual Diva AZKi, adalah VTuber penyanyi solo dari Hololive Production Generasi 0 bersama Tokino Sora, Roboco-san, Sakura Miko, dan Hoshimachi Suisei. Debut pada 15 November 2018 lewat cover Just Be Friends, ia hadir sebagai “diva virtual yang dibangkitkan di dunia maya untuk mencipta dunia baru.”
+
+Awalnya bernaung di bawah label INoNaKa Music, sejak 1 April 2022 ia resmi pindah ke cabang utama Hololive. Dengan suara yang emosional dan eksplorasi genre musik yang luas, AZKi kini dikenal sebagai salah satu ikon penting dalam dunia musik virtual.
             </p>
             <div style={{
               textAlign: 'center',

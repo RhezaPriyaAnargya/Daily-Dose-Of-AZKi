@@ -145,7 +145,7 @@ const Dashboard: React.FC = () => {
                         borderRadius: '16px',
                         display: 'flex',
                         alignItems: 'center',
-                        padding: '80px 40px',
+                        padding: '40px 40px',
                         marginBottom: '60px',
                         gap: '40px',
                         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)'
